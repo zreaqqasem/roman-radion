@@ -5,7 +5,6 @@
     <title>Custom Cast Receiver</title>
     <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
     <style>
-      /* Full-screen background image */
       body {
         margin: 0;
         background-color: #000;
@@ -27,43 +26,27 @@
     // Start the receiver context
     context.start();
 
-    // Listen for custom messages to update metadata
-    context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
-      const data = JSON.parse(event.data);
+    // Function to update the media metadata
+    function updateMediaMetadata(title, artist) {
+      const metadata = new cast.framework.messages.MediaMetadata(cast.framework.messages.MetadataType.MUSIC_TRACK);
+      metadata.title = title;
+      metadata.artist = artist;
 
-      // Log the received message for debugging
-      console.log('Received custom message:', data);
+      const mediaInfo = new cast.framework.messages.MediaInformation();
+      mediaInfo.metadata = metadata;
 
-      // Update media metadata and UI dynamically
-      let playerElement = document.getElementsByTagName("cast-media-player")[0];
-
-      // Check if data contains the necessary fields
-      if (data.imageUrl) {
-        playerElement.style.setProperty('--splash-image', `url("${data.imageUrl}")`);
-      }
-      if (data.title) {
-        playerElement.setAttribute('title', data.title); // Update title attribute
-      }
-      if (data.artist) {
-        playerElement.setAttribute('artist', data.artist); // Update artist attribute
-      }
-
-      console.log('Updated metadata dynamically.');
-    });
+      playerManager.load(mediaInfo);
+    }
 
     // Log when the receiver is ready
     context.addEventListener(cast.framework.system.EventType.READY, () => {
       console.log("Receiver is ready!");
     });
-  </script>
-      <script>
-    // Wait for 10 seconds, then update the title
-    setTimeout(() => {
-      let playerElement = document.getElementsByTagName("cast-media-player")[0];
 
-      // Update title attribute
-      playerElement.setAttribute('title', 'Updated Song Title');
-      console.log('Title updated to: Updated Song Title');
+    // Wait for 10 seconds, then update the title and artist
+    setTimeout(() => {
+      updateMediaMetadata('Hello', 'Qasem');
+      console.log('Metadata updated to Hello, Qasem');
     }, 10000); // 10,000 milliseconds = 10 seconds
   </script>
 </body>
