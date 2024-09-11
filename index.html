@@ -97,17 +97,6 @@
             }
         }
 
-        // Handle pause/play state and adjust remaining time accordingly
-        playerManager.addEventListener(cast.framework.events.EventType.PAUSE, () => {
-            console.log('Player paused');
-            clearTimeout(updateTimeout); // Stop the countdown while paused
-        });
-
-        playerManager.addEventListener(cast.framework.events.EventType.PLAY, () => {
-            console.log('Player resumed');
-            scheduleNextFetch(); // Resume fetching based on the remaining time
-        });
-
         // Fetch the metadata the first time on load
         fetchAndUpdateMetadata();
     </script>
