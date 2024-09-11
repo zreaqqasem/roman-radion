@@ -5,47 +5,60 @@
     <title>Custom Cast Receiver</title>
     <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
     <style>
-      /* Default Styled Media Receiver look-alike CSS */
+      /* Full-screen background image */
       body {
         margin: 0;
         background-color: #000;
+        overflow: hidden;
+      }
+
+      .background-image {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+        z-index: -1;
+        filter: blur(20px);
+        opacity: 0.4;
+      }
+
+      /* Main content */
+      .content {
         display: flex;
-        justify-content: center;
         align-items: center;
+        justify-content: flex-start;
+        padding: 50px;
         height: 100vh;
         color: white;
         font-family: Arial, sans-serif;
       }
-      .container {
-        position: relative;
-        width: 90%;
-        max-width: 600px;
-      }
-      .album-art {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+
+      .album-cover {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background-color: #444;
         background-size: cover;
         background-position: center;
-        filter: blur(10px);
-        opacity: 0.7;
+        margin-right: 50px;
       }
+
       .metadata {
-        position: relative;
-        z-index: 2;
-        padding: 20px;
-        background-color: rgba(0, 0, 0, 0.5);
-        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
       }
+
       .metadata h1 {
-        font-size: 24px;
+        font-size: 36px;
         margin: 0;
       }
+
       .metadata p {
-        font-size: 18px;
-        margin: 5px 0 0;
+        font-size: 24px;
+        margin: 10px 0 0;
       }
     </style>
     <script>
@@ -53,7 +66,7 @@
         const context = cast.framework.CastReceiverContext.getInstance();
         const playerManager = context.getPlayerManager();
 
-        // Load metadata and update UI accordingly
+        // Listen for LOAD requests and update metadata when loading new media
         playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, (loadRequest) => {
           const media = loadRequest.media;
           const metadata = media.metadata;
@@ -65,18 +78,21 @@
           return loadRequest;
         });
 
+        // Listen for custom metadata updates via custom messages
         context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
           const data = JSON.parse(event.data);
           updateUI(data);
         });
 
+        // Start the Cast receiver
         context.start();
       };
 
       function updateUI(metadata) {
         // Update background image
         if (metadata.images && metadata.images[0]) {
-          document.querySelector('.album-art').style.backgroundImage = `url(${metadata.images[0].url})`;
+          document.querySelector('.background-image').src = metadata.images[0].url;
+          document.querySelector('.album-cover').style.backgroundImage = `url(${metadata.images[0].url})`;
         }
 
         // Update song title and artist
@@ -86,8 +102,15 @@
     </script>
   </head>
   <body>
-    <div class="container">
-      <div class="album-art"></div>
+    <!-- Background image filling the entire screen -->
+    <img class="background-image" />
+
+    <!-- Main content area -->
+    <div class="content">
+      <!-- Album cover (circular image) -->
+      <div class="album-cover"></div>
+
+      <!-- Song metadata -->
       <div class="metadata">
         <h1 id="title">Song Title</h1>
         <p id="artist">Artist Name</p>
