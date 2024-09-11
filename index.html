@@ -5,6 +5,7 @@
     <title>Custom Cast Receiver</title>
     <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
     <style>
+        /* Full-screen background image */
         body {
             margin: 0;
             background-color: #000;
@@ -23,6 +24,7 @@
             opacity: 0.4;
         }
 
+        /* Main content */
         .content {
             display: flex;
             align-items: center;
@@ -65,41 +67,62 @@
             const context = cast.framework.CastReceiverContext.getInstance();
             const playerManager = context.getPlayerManager();
 
+            // Playback configuration to ensure smooth start
+            const playbackConfig = new cast.framework.PlaybackConfig();
+            playbackConfig.autoResumeNumberOfSegments = 1;
+            context.start({playbackConfig: playbackConfig});
+
+            // Intercept LOAD requests and update metadata when loading new media
             playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, (loadRequest) => {
                 const media = loadRequest.media;
                 const metadata = media.metadata;
-                if (metadata) {
-                    updateUI(metadata);
+
+                if (media && media.contentId) {
+                    console.log("Loading media: ", media.contentId);
+                    updateUI(metadata); // Update the metadata UI
+                } else {
+                    console.log("No contentId in load request.");
                 }
-                return loadRequest;
+
+                return loadRequest; // Pass the load request to the default handler
             });
 
+            // Listen for custom metadata updates via custom messages
             context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
                 const data = JSON.parse(event.data);
                 console.log("Custom message received", data);
-                updateUI(data);
+                updateUI(data); // Update the UI with the received metadata
             });
 
+            // Start the Cast receiver
             context.start();
         };
 
         function updateUI(metadata) {
             console.log("Updating UI with metadata", metadata);
+
+            // Update background image
             if (metadata.images && metadata.images[0]) {
                 document.querySelector('.background-image').src = metadata.images[0].url;
                 document.querySelector('.album-cover').style.backgroundImage = `url(${metadata.images[0].url})`;
             }
 
+            // Update song title and artist
             document.querySelector('#title').textContent = metadata.title || 'Unknown Title';
             document.querySelector('#artist').textContent = metadata.artist || 'Unknown Artist';
         }
     </script>
 </head>
 <body>
+    <!-- Background image filling the entire screen -->
     <img class="background-image" />
 
+    <!-- Main content area -->
     <div class="content">
+        <!-- Album cover (circular image) -->
         <div class="album-cover"></div>
+
+        <!-- Song metadata -->
         <div class="metadata">
             <h1 id="title">Song Title</h1>
             <p id="artist">Artist Name</p>
