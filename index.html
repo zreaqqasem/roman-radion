@@ -1,107 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Custom Cast Receiver</title>
-  <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-  <style>
-    body {
-      margin: 0;
-      background-color: #000;
-      overflow: hidden;
-    }
+    <meta charset="UTF-8">
+    <title>Custom Cast Receiver</title>
+    <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <style>
+        /* Full-screen background image */
+        body {
+            margin: 0;
+            background-color: #000;
+            overflow: hidden;
+        }
 
-    .background-image {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      z-index: -1;
-      filter: blur(20px);
-      opacity: 0.4;
-    }
+        .background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -1;
+            filter: blur(20px);
+            opacity: 0.4;
+        }
 
-    .content {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 50px;
-      height: 100vh;
-      color: white;
-      font-family: Arial, sans-serif;
-    }
+        /* Main content */
+        .content {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 50px;
+            height: 100vh;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
 
-    .album-cover {
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      background-color: #444;
-      background-size: cover;
-      background-position: center;
-      margin-right: 50px;
-    }
+        .album-cover {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background-color: #444;
+            background-size: cover;
+            background-position: center;
+            margin-right: 50px;
+        }
 
-    .metadata {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
+        .metadata {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
 
-    .metadata h1 {
-      font-size: 36px;
-      margin: 0;
-    }
+        .metadata h1 {
+            font-size: 36px;
+            margin: 0;
+        }
 
-    .metadata p {
-      font-size: 24px;
-      margin: 10px 0 0;
-    }
-  </style>
-  <script>
-    window.onload = function () {
-      const context = cast.framework.CastReceiverContext.getInstance();
-      const playerManager = context.getPlayerManager();
+        .metadata p {
+            font-size: 24px;
+            margin: 10px 0 0;
+        }
+    </style>
+    <script>
+        window.onload = function () {
+            console.log("Receiver initialized");
+            const context = cast.framework.CastReceiverContext.getInstance();
+            const playerManager = context.getPlayerManager();
 
-      // Listen for custom messages for metadata updates
-      context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
-        const data = JSON.parse(event.data);
-        console.log('Received data:', data);
-        updateUI(data);
-      });
+            // Playback configuration to ensure smooth start
+            const playbackConfig = new cast.framework.PlaybackConfig();
+            playbackConfig.autoResumeNumberOfSegments = 1;
+            context.start({playbackConfig: playbackConfig});
 
-      // Start the Cast receiver
-      context.start();
-    };
+            // Intercept LOAD requests and update metadata when loading new media
+            playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, (loadRequest) => {
+                const media = loadRequest.media;
+                const metadata = media.metadata;
 
-    function updateUI(metadata) {
-      // Update background image
-      if (metadata.imageUrl) {
-        document.querySelector('.background-image').src = metadata.imageUrl;
-        document.querySelector('.album-cover').style.backgroundImage = `url(${metadata.imageUrl})`;
-      }
+                if (media && media.contentId) {
+                    console.log("Loading media: ", media.contentId);
+                    updateUI(metadata); // Update the metadata UI
+                } else {
+                    console.log("No contentId in load request.");
+                }
 
-      // Update song title and artist
-      document.querySelector('#title').textContent = metadata.title || 'Unknown Title';
-      document.querySelector('#artist').textContent = metadata.artist || 'Unknown Artist';
-    }
-  </script>
+                return loadRequest; // Pass the load request to the default handler
+            });
+
+            // Listen for custom metadata updates via custom messages
+            context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
+                const data = JSON.parse(event.data);
+                console.log("Custom message received", data);
+                updateUI(data); // Update the UI with the received metadata
+            });
+
+            // Start the Cast receiver
+            context.start();
+        };
+
+        function updateUI(metadata) {
+            console.log("Updating UI with metadata", metadata);
+
+            // Update background image
+            if (metadata.images && metadata.images[0]) {
+                document.querySelector('.background-image').src = metadata.images[0].url;
+                document.querySelector('.album-cover').style.backgroundImage = `url(${metadata.images[0].url})`;
+            }
+
+            // Update song title and artist
+            document.querySelector('#title').textContent = metadata.title || 'Unknown Title';
+            document.querySelector('#artist').textContent = metadata.artist || 'Unknown Artist';
+        }
+    </script>
 </head>
 <body>
-  <!-- Background image filling the entire screen -->
-  <img class="background-image" />
+    <!-- Background image filling the entire screen -->
+    <img class="background-image" />
 
-  <!-- Main content area -->
-  <div class="content">
-    <!-- Album cover (circular image) -->
-    <div class="album-cover"></div>
+    <!-- Main content area -->
+    <div class="content">
+        <!-- Album cover (circular image) -->
+        <div class="album-cover"></div>
 
-    <!-- Song metadata -->
-    <div class="metadata">
-      <h1 id="title">Song Title</h1>
-      <p id="artist">Artist Name</p>
+        <!-- Song metadata -->
+        <div class="metadata">
+            <h1 id="title">Song Title</h1>
+            <p id="artist">Artist Name</p>
+        </div>
     </div>
-  </div>
 </body>
 </html>
