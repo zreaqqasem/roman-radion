@@ -5,9 +5,38 @@
   </script>
 </head>
 <body>
+  <!-- Use the default Cast media player -->
   <cast-media-player></cast-media-player>
+
   <script>
-    cast.framework.CastReceiverContext.getInstance().start();
+    // Get the instance of the CastReceiverContext
+    const context = cast.framework.CastReceiverContext.getInstance();
+
+    // Start the Cast receiver
+    context.start();
+
+    // Add a custom message listener to update metadata
+    context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
+      // Parse the data from the message
+      const data = JSON.parse(event.data);
+
+      // Update metadata if data is received
+      const playerManager = context.getPlayerManager();
+      const mediaInformation = playerManager.getMediaInformation();
+
+      if (mediaInformation && mediaInformation.metadata) {
+        // Update the metadata fields like title, artist, and image
+        mediaInformation.metadata.title = data.title || mediaInformation.metadata.title;
+        mediaInformation.metadata.artist = data.artist || mediaInformation.metadata.artist;
+        mediaInformation.metadata.images = [{ url: data.imageUrl }] || mediaInformation.metadata.images;
+
+        // Apply the updated metadata to the player without interrupting the media
+        playerManager.setMediaInformation(mediaInformation);
+        console.log('Metadata updated: ', mediaInformation.metadata);
+      } else {
+        console.error('No media information found to update.');
+      }
+    });
   </script>
 </body>
 </html>
