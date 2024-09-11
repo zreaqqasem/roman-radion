@@ -9,39 +9,44 @@
         const context = cast.framework.CastReceiverContext.getInstance();
         const playerManager = context.getPlayerManager();
 
-        // Start CAF with default options to handle media playback
+        // Start the receiver context and ensure video playback is handled by CAF
         const options = new cast.framework.CastReceiverOptions();
+        options.disableIdleTimeout = true; // Optional: prevent Chromecast from timing out
         context.start(options);
 
-        // Listen for custom messages
+        // Listen for custom messages to update metadata
         context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
           const data = JSON.parse(event.data);
           
           // Update metadata
           const metadata = new cast.framework.messages.MediaMetadata(cast.framework.messages.MetadataType.MUSIC_TRACK);
-          console.log("qasem.....")
           metadata.title = data.title;
           metadata.artist = data.artist;
-          metadata.images = [
-              { url: data.imageUrl }
-          ];
+          metadata.images = [{ url: data.imageUrl }];
 
-          // Get current media information and update the metadata
           const mediaInformation = playerManager.getMediaInformation();
           if (mediaInformation) {
             mediaInformation.metadata = metadata;
-
-            // Update the media info with the new metadata
             playerManager.setMediaInformation(mediaInformation);
-            console.log("Metadata updated:", data);
+            console.log("Metadata updated successfully.");
           }
         });
 
         console.log("Receiver started with default player");
       };
     </script>
+    <style>
+      /* Ensure the video takes the full screen */
+      html, body, video {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
   </head>
   <body>
+    <video autoplay controls></video>
     <h1>Custom Receiver is running!</h1>
   </body>
 </html>
