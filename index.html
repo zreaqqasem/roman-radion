@@ -9,23 +9,24 @@
         const context = cast.framework.CastReceiverContext.getInstance();
         const playerManager = context.getPlayerManager();
 
-        // Listen for custom messages
+        // Listen for custom messages from the sender app
         context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
           const data = JSON.parse(event.data);
           
-          // Update metadata
+          // Create new metadata object with updated values
           const metadata = new cast.framework.messages.MediaMetadata(cast.framework.messages.MetadataType.MUSIC_TRACK);
           metadata.title = data.title;
           metadata.artist = data.artist;
-          metadata.images = [
-              { url: data.imageUrl }
-          ];
+          metadata.images = [{ url: data.imageUrl }];
 
-          // Update the media info with the new metadata
-          const mediaInformation = playerManager.getMediaInformation();
-          mediaInformation.metadata = metadata;
+          // Create new media information object with updated metadata
+          const mediaInformation = new cast.framework.messages.MediaInformation();
+          mediaInformation.contentId = playerManager.getMediaInformation().contentId;  // Keep the same contentId
+          mediaInformation.streamType = playerManager.getMediaInformation().streamType;  // Keep the same stream type
+          mediaInformation.contentType = playerManager.getMediaInformation().contentType;  // Keep the same content type
+          mediaInformation.metadata = metadata;  // Assign updated metadata
 
-          // Apply the updated metadata
+          // Apply the updated media information with new metadata
           playerManager.setMediaInformation(mediaInformation);
         });
 
