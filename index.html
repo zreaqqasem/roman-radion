@@ -1,6 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Custom Cast Receiver</title>
+    <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <style>
+      body {
+        margin: 0;
+        background-color: #000;
+        overflow: hidden;
+      }
+    </style>
+</head>
 <body>
   <cast-media-player></cast-media-player> <!-- Keeps the default media player UI -->
+
+  <script>
+    // Wait for 10 seconds, then update the title
+    setTimeout(() => {
+      let playerElement = document.getElementsByTagName("cast-media-player")[0];
+
+      // Update title attribute
+      playerElement.setAttribute('title', 'Updated Song Title');
+      console.log('Title updated to: Updated Song Title');
+    }, 10000); // 10,000 milliseconds = 10 seconds
+  </script>
 </body>
 </html>
