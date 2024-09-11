@@ -33,6 +33,29 @@
 
     // Listen for custom messages to update metadata
     context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
+
+
+      // testtttt
+
+
+         let mediaInfo = playerManager.getMediaInformation();
+        if (mediaInfo) {
+          let metadata = new cast.framework.messages.MediaMetadata(cast.framework.messages.MetadataType.MUSIC_TRACK);
+          metadata.title = "Hello";
+          metadata.artist = "Qasem";
+          
+          // You can add an image if desired
+          metadata.images = [{ url: "https://example.com/new-image.jpg" }];
+
+          // Update the media information with the new metadata
+          mediaInfo.metadata = metadata;
+          playerManager.setMediaInformation(mediaInfo);
+          console.log("Metadata updated to: Hello by Qasem");
+        }
+
+
+
+        // testttt
       const data = JSON.parse(event.data);
 
       console.log('Received custom message:', data);
