@@ -62,6 +62,66 @@
         }
     </style>
     <script>
+
+        playerManager.setMessageInterceptor(
+  cast.framework.messages.MessageType.LOAD, loadRequestData => {
+    castDebugLogger.debug(LOG_RECEIVER_TAG,
+      `loadRequestData: ${JSON.stringify(loadRequestData)}`);
+
+    // If the loadRequestData is incomplete, return an error message.
+    if (!loadRequestData || !loadRequestData.media) {
+      const error = new cast.framework.messages.ErrorData(
+        cast.framework.messages.ErrorType.LOAD_FAILED);
+      error.reason = cast.framework.messages.ErrorReason.INVALID_REQUEST;
+      return error;
+    }
+
+    // Check all content source fields for the asset URL or ID.
+    let source = loadRequestData.media.contentUrl
+      || loadRequestData.media.entity || loadRequestData.media.contentId;
+
+    // If there is no source or a malformed ID then return an error.
+    if (!source || source == "" || !source.match(ID_REGEX)) {
+      let error = new cast.framework.messages.ErrorData(
+        cast.framework.messages.ErrorType.LOAD_FAILED);
+      error.reason = cast.framework.messages.ErrorReason.INVALID_REQUEST;
+      return error;
+    }
+
+    let sourceId = source.match(ID_REGEX)[1];
+
+    // Optionally add breaks to the media information and set the contentUrl.
+    return Promise.resolve()
+    // .then(() => addBreaks(loadRequestData.media)) // Uncomment to enable ads.
+    .then(() => {
+      // If the source is a url that points to an asset don't fetch from the
+      // content repository.
+      if (sourceId.includes('.')) {
+        castDebugLogger.debug(LOG_RECEIVER_TAG,
+          "Interceptor received full URL");
+        loadRequestData.media.contentUrl = source;
+        return loadRequestData;
+      } else {
+        // Fetch the contentUrl if provided an ID or entity URL.
+        castDebugLogger.debug(LOG_RECEIVER_TAG, "Interceptor received ID");
+        return MediaFetcher.fetchMediaInformationById(sourceId)
+        .then((mediaInformation) => {
+          loadRequestData.media = mediaInformation;
+          return loadRequestData;
+        })
+      }
+    })
+    .catch((errorMessage) => {
+      let error = new cast.framework.messages.ErrorData(
+        cast.framework.messages.ErrorType.LOAD_FAILED);
+      error.reason = cast.framework.messages.ErrorReason.INVALID_REQUEST;
+      castDebugLogger.error(LOG_RECEIVER_TAG, errorMessage);
+      return error;
+    });
+  }
+);
+
+        
         window.onload = function () {
             console.log("Receiver initialized");
             const context = cast.framework.CastReceiverContext.getInstance();
