@@ -81,6 +81,7 @@
         // Listen for custom metadata updates via custom messages
         context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
           const data = JSON.parse(event.data);
+          console.log(data)
           updateUI(data);
         });
 
