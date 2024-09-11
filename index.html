@@ -9,29 +9,35 @@
         const context = cast.framework.CastReceiverContext.getInstance();
         const playerManager = context.getPlayerManager();
 
-        // Listen for custom messages to update metadata
+        // Start CAF with default options to handle media playback
+        const options = new cast.framework.CastReceiverOptions();
+        context.start(options);
+
+        // Listen for custom messages
         context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
           const data = JSON.parse(event.data);
           
-          // Update the metadata
+          // Update metadata
           const metadata = new cast.framework.messages.MediaMetadata(cast.framework.messages.MetadataType.MUSIC_TRACK);
+          console.log("qasem.....")
           metadata.title = data.title;
           metadata.artist = data.artist;
           metadata.images = [
               { url: data.imageUrl }
           ];
 
-          // Get current media information
+          // Get current media information and update the metadata
           const mediaInformation = playerManager.getMediaInformation();
-          mediaInformation.metadata = metadata;
+          if (mediaInformation) {
+            mediaInformation.metadata = metadata;
 
-          // Update the media info with the new metadata
-          playerManager.setMediaInformation(mediaInformation);
-
-          console.log("Metadata updated:", data);
+            // Update the media info with the new metadata
+            playerManager.setMediaInformation(mediaInformation);
+            console.log("Metadata updated:", data);
+          }
         });
 
-        context.start();
+        console.log("Receiver started with default player");
       };
     </script>
   </head>
