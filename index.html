@@ -5,37 +5,46 @@
   </script>
 </head>
 <body>
-  <!-- Use the default Cast media player -->
   <cast-media-player></cast-media-player>
 
   <script>
-    // Get the instance of the CastReceiverContext
+    // Initialize the CastReceiverContext
     const context = cast.framework.CastReceiverContext.getInstance();
 
-    // Start the Cast receiver
+    // Initialize PlayerManager to control media playback
+    const playerManager = context.getPlayerManager();
+
+    // Start the receiver with default options
     context.start();
 
-    // Add a custom message listener to update metadata
+    // Add a custom message listener for receiving metadata updates
     context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
-      // Parse the data from the message
       const data = JSON.parse(event.data);
 
-      // Update metadata if data is received
-      const playerManager = context.getPlayerManager();
+      // Log the received message for debugging
+      console.log('Received message: ', data);
+
+      // Get current media information
       const mediaInformation = playerManager.getMediaInformation();
 
+      // Update metadata if we have the current media information
       if (mediaInformation && mediaInformation.metadata) {
         // Update the metadata fields like title, artist, and image
         mediaInformation.metadata.title = data.title || mediaInformation.metadata.title;
         mediaInformation.metadata.artist = data.artist || mediaInformation.metadata.artist;
         mediaInformation.metadata.images = [{ url: data.imageUrl }] || mediaInformation.metadata.images;
 
-        // Apply the updated metadata to the player without interrupting the media
+        // Apply the updated metadata without interrupting the media
         playerManager.setMediaInformation(mediaInformation);
         console.log('Metadata updated: ', mediaInformation.metadata);
       } else {
         console.error('No media information found to update.');
       }
+    });
+
+    // Optionally: Add logging for cast events (useful for debugging)
+    context.addEventListener(cast.framework.system.EventType.READY, () => {
+      console.log("Receiver is ready!");
     });
   </script>
 </body>
