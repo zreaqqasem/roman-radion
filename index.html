@@ -1,103 +1,13 @@
-<!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Custom Receiver</title>
-    <style type="text/css">
-      html, body, video {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        color: white;
-      }
-      .loader {
-        position: absolute;
-        inset: 0;
-        justify-content: center;
-        align-content: center;
-        font-size: 50px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="loader">Loading...</div>
-    <video></video>
-    <script type="application/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-    <script type="application/javascript" src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script type="application/javascript">
-      window.onload = function() {
-        const context = cast.framework.CastReceiverContext.getInstance();
-        const playerManager = context.getPlayerManager();
-        const videoElement = document.querySelector('video');
-        let hls;  // Store the HLS.js instance
-
-        const setStatus = ({ isLoading, error }) => {
-          const loader = document.querySelector('.loader');
-          loader.textContent = isLoading ? "Loading..." : (error || "");
-          loader.style.display = isLoading || error ? "flex" : "none";
-        };
-
-        // Show loader when the video is buffering
-        videoElement.addEventListener('loadeddata', () => setStatus({ isLoading: false }));
-
-        // Intercept media loading requests
-        playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, event => {
-          setStatus({ isLoading: true });
-
-          return new Promise((resolve, reject) => {
-            if (hls) {
-              hls.destroy();
-              hls = null;
-            }
-
-            hls = new Hls();
-            hls.attachMedia(videoElement);
-
-            hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-              hls.loadSource(event.media.contentId);
-              videoElement.play();
-            });
-
-            hls.on(Hls.Events.MANIFEST_PARSED, () => resolve(event));
-
-            hls.on(Hls.Events.ERROR, (e, data) => {
-              if (data.fatal) {
-                switch (data.type) {
-                  case Hls.ErrorTypes.NETWORK_ERROR:
-                    setStatus({ error: 'Network Error' });
-                    resolve(new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.LOAD_FAILED));
-                    break;
-                  case Hls.ErrorTypes.MEDIA_ERROR:
-                    hls.recoverMediaError();
-                    break;
-                  default:
-                    playerManager.sendError(event.senderId, event.requestId, cast.framework.messages.ErrorType.LOAD_FAILED);
-                    setStatus({ error: 'Unrecoverable Error' });
-                    break;
-                }
-              }
-            });
-          });
-        });
-
-        // Handle play/pause messages for the player
-        const handlePlaybackStatus = shouldPlay => () => {
-          videoElement[shouldPlay ? 'play' : 'pause']();
-          playerManager.broadcastStatus(true);
-        };
-
-        playerManager.setMessageInterceptor(cast.framework.messages.MessageType.PAUSE, handlePlaybackStatus(false));
-        playerManager.setMessageInterceptor(cast.framework.messages.MessageType.PLAY, handlePlaybackStatus(true));
-
-        // Start the Cast Receiver Framework
-        const options = new cast.framework.CastReceiverOptions();
-        options.skipPlayersLoad = true;  // Use custom player
-        options.disableIdleTimeout = true;  // Disable idle timeout
-        options.supportedCommands = cast.framework.messages.Command.ALL_BASIC_MEDIA;
-
-        context.start(options);
-      };
-    </script>
-  </body>
+<head>
+  <script type="text/javascript"
+      src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js">
+  </script>
+</head>
+<body>
+  <cast-media-player></cast-media-player>
+  <script>
+    cast.framework.CastReceiverContext.getInstance().start();
+  </script>
+</body>
 </html>
