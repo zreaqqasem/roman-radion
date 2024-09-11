@@ -5,82 +5,72 @@
     <title>Custom Cast Receiver</title>
     <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
     <style>
-      body {
-        margin: 0;
-        background-color: #000;
-        overflow: hidden;
-      }
-
-      cast-media-player {
-        --splash-image: url("https://example.com/initial-image.jpg"); /* Default image */
-      }
+        body {
+            margin: 0;
+            background-color: #000;
+            overflow: hidden;
+        }
+        cast-media-player {
+            --splash-image: url("https://example.com/initial-image.jpg"); /* Default image */
+        }
     </style>
 </head>
 <body>
-  <cast-media-player></cast-media-player> <!-- Keeps the default media player UI -->
+    <cast-media-player></cast-media-player> <!-- Keeps the default media player UI -->
 
-  <script>
-    const context = cast.framework.CastReceiverContext.getInstance();
-    const playerManager = context.getPlayerManager();
+    <script>
+        const context = cast.framework.CastReceiverContext.getInstance();
+        const playerManager = context.getPlayerManager();
 
-    // Start the Cast receiver context
-    context.start();
+        // Start the Cast receiver context
+        context.start();
 
-    // Log when the receiver is ready
-    context.addEventListener(cast.framework.system.EventType.READY, () => {
-      console.log("Receiver is ready!");
-    });
+        // Log when the receiver is ready
+        context.addEventListener(cast.framework.system.EventType.READY, () => {
+            console.log("Receiver is ready!");
+        });
 
-    // Listen for custom messages to update metadata
-    context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
+        // Function to fetch metadata from your API
+        function fetchAndUpdateMetadata() {
+            fetch('https://audio2.goforthtech.com/api/nowplaying/5') // Change to your API endpoint
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Fetched metadata:', data);
 
+                    const nowPlaying = data.now_playing;
+                    const title = nowPlaying.song.title;
+                    const artist = nowPlaying.song.artist;
+                    const imageUrl = nowPlaying.song.art;
 
-      // testtttt
-
-
-         let mediaInfo = playerManager.getMediaInformation();
-        if (mediaInfo) {
-          let metadata = new cast.framework.messages.MediaMetadata(cast.framework.messages.MetadataType.MUSIC_TRACK);
-          metadata.title = "Hello";
-          metadata.artist = "Qasem";
-          
-          // You can add an image if desired
-          metadata.images = [{ url: "https://example.com/new-image.jpg" }];
-
-          // Update the media information with the new metadata
-          mediaInfo.metadata = metadata;
-          playerManager.setMediaInformation(mediaInfo);
-          console.log("Metadata updated to: Hello by Qasem");
+                    // Update Chromecast metadata
+                    updateMetadata(title, artist, imageUrl);
+                })
+                .catch(error => console.error('Error fetching metadata:', error));
         }
 
+        // Function to update Chromecast metadata
+        function updateMetadata(title, artist, imageUrl) {
+            const mediaInfo = playerManager.getMediaInformation();
+            if (mediaInfo) {
+                const metadata = new cast.framework.messages.MediaMetadata(cast.framework.messages.MetadataType.MUSIC_TRACK);
+                metadata.title = title;
+                metadata.artist = artist;
+                metadata.images = [{ url: imageUrl }];
 
-
-        // testttt
-      const data = JSON.parse(event.data);
-
-      console.log('Received custom message:', data);
-
-      // Check if the data contains title, artist, and image
-      if (data.title && data.artist && data.imageUrl) {
-        // Retrieve the current media information
-        let mediaInfo = playerManager.getMediaInformation();
-        if (mediaInfo) {
-          let metadata = new cast.framework.messages.MediaMetadata(cast.framework.messages.MetadataType.MUSIC_TRACK);
-          
-          // Update metadata with received message data
-          metadata.title = data.title;
-          metadata.artist = data.artist;
-          metadata.images = [{ url: data.imageUrl }];
-
-          // Update the media information with the new metadata
-          mediaInfo.metadata = metadata;
-          playerManager.setMediaInformation(mediaInfo);
-          console.log(`Metadata updated to: ${data.title} by ${data.artist}`);
+                // Update the media information with the new metadata
+                mediaInfo.metadata = metadata;
+                playerManager.setMediaInformation(mediaInfo);
+                console.log(`Metadata updated to: ${title} by ${artist}`);
+            } else {
+                console.error('No media information available.');
+            }
         }
-      } else {
-        console.error("Invalid message format. Expected fields: title, artist, imageUrl.");
-      }
-    });
-  </script>
+
+        // Fetch metadata every 3 minutes (180000 milliseconds)
+        setInterval(fetchAndUpdateMetadata, 180000);
+
+        // Fetch the first time on load
+        fetchAndUpdateMetadata();
+    </script>
 </body>
 </html>
