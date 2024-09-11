@@ -8,10 +8,18 @@
   <cast-media-player></cast-media-player>
 
   <script>
-var castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-// Add an event listener to the defined namespace channel
-castSession.addMessageListener("urn:x-cast:com.example.custom", (namespace, message) => {
-const data = JSON.parse(event.data);
+    // Initialize the CastReceiverContext
+    const context = cast.framework.CastReceiverContext.getInstance();
+
+    // Initialize PlayerManager to control media playback
+    const playerManager = context.getPlayerManager();
+
+    // Start the receiver with default options
+    context.start();
+
+    // Add a custom message listener for receiving metadata updates
+      castSession.addMessageListener("urn:x-cast:com.example.custom", (namespace, event) => {
+      const data = JSON.parse(event.data);
 
       // Log the received message for debugging
       console.log('Received message: ', data);
@@ -32,9 +40,12 @@ const data = JSON.parse(event.data);
       } else {
         console.error('No media information found to update.');
       }
-  console.log(namespace, message);
-});
-   
+    });
+
+    // Optionally: Add logging for cast events (useful for debugging)
+    context.addEventListener(cast.framework.system.EventType.READY, () => {
+      console.log("Receiver is ready!");
+    });
   </script>
 </body>
 </html>
