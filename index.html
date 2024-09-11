@@ -5,72 +5,79 @@
     <title>Custom Cast Receiver</title>
     <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
     <style>
-        body {
-            margin: 0;
-            background-color: #000;
-            overflow: hidden;
-        }
-        cast-media-player {
-            --splash-image: url("https://example.com/initial-image.jpg"); /* Default image */
-        }
+      body {
+        margin: 0;
+        background-color: #000;
+        overflow: hidden;
+      }
+
+      cast-media-player {
+        --splash-image: url("https://example.com/initial-image.jpg"); /* Default image */
+      }
     </style>
 </head>
 <body>
-    <cast-media-player></cast-media-player> <!-- Keeps the default media player UI -->
+  <cast-media-player></cast-media-player> <!-- Keeps the default media player UI -->
 
-    <script>
-        const context = cast.framework.CastReceiverContext.getInstance();
-        const playerManager = context.getPlayerManager();
+  <script>
+    const context = cast.framework.CastReceiverContext.getInstance();
+    const playerManager = context.getPlayerManager();
+    let previousMetadata = { title: '', artist: '', imageUrl: '' }; // Store previous metadata
 
-        // Start the Cast receiver context
-        context.start();
+    // Start the Cast receiver context
+    context.start();
 
-        // Log when the receiver is ready
-        context.addEventListener(cast.framework.system.EventType.READY, () => {
-            console.log("Receiver is ready!");
-        });
+    // Log when the receiver is ready
+    context.addEventListener(cast.framework.system.EventType.READY, () => {
+      console.log("Receiver is ready!");
+    });
 
-        // Function to fetch metadata from your API
-        function fetchAndUpdateMetadata() {
-            fetch('https://audio2.goforthtech.com/api/nowplaying/5') // Change to your API endpoint
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Fetched metadata:', data);
+    // Function to fetch metadata from the API (dummy function, replace with real API call)
+    function fetchMetadata() {
+      return {
+        title: "Sample Title", // Replace with real data
+        artist: "Sample Artist", // Replace with real data
+        imageUrl: "https://example.com/sample-image.jpg" // Replace with real data
+      };
+    }
 
-                    const nowPlaying = data.now_playing;
-                    const title = nowPlaying.song.title;
-                    const artist = nowPlaying.song.artist;
-                    const imageUrl = nowPlaying.song.art;
+    // Function to update the media player UI if metadata has changed
+    function updateMetadata() {
+      const newMetadata = fetchMetadata();
 
-                    // Update Chromecast metadata
-                    updateMetadata(title, artist, imageUrl);
-                })
-                .catch(error => console.error('Error fetching metadata:', error));
-        }
+      // Check if the new data is different from the previous data
+      if (newMetadata.title !== previousMetadata.title ||
+          newMetadata.artist !== previousMetadata.artist ||
+          newMetadata.imageUrl !== previousMetadata.imageUrl) {
 
-        // Function to update Chromecast metadata
-        function updateMetadata(title, artist, imageUrl) {
-            const mediaInfo = playerManager.getMediaInformation();
-            if (mediaInfo) {
-                const metadata = new cast.framework.messages.MediaMetadata(cast.framework.messages.MetadataType.MUSIC_TRACK);
-                metadata.title = title;
-                metadata.artist = artist;
-                metadata.images = [{ url: imageUrl }];
+        // Update the media player
+        let playerElement = document.getElementsByTagName("cast-media-player")[0];
 
-                // Update the media information with the new metadata
-                mediaInfo.metadata = metadata;
-                playerManager.setMediaInformation(mediaInfo);
-                console.log(`Metadata updated to: ${title} by ${artist}`);
-            } else {
-                console.error('No media information available.');
-            }
-        }
+        // Update title and artist
+        playerElement.setAttribute('title', newMetadata.title);
+        playerElement.setAttribute('artist', newMetadata.artist);
 
-        // Fetch metadata every 3 minutes (180000 milliseconds)
-        setInterval(fetchAndUpdateMetadata, 180000);
+        // Update image
+        playerElement.style.setProperty('--splash-image', `url("${newMetadata.imageUrl}")`);
 
-        // Fetch the first time on load
-        fetchAndUpdateMetadata();
-    </script>
+        console.log(`Updated metadata to: ${newMetadata.title} by ${newMetadata.artist}`);
+
+        // Update the previous metadata
+        previousMetadata = newMetadata;
+      } else {
+        console.log("Metadata has not changed, no update needed.");
+      }
+    }
+
+    // First fetch after 10 seconds
+    setTimeout(() => {
+      updateMetadata();
+
+      // Then fetch every 10 seconds
+      setInterval(() => {
+        updateMetadata();
+      }, 10000);
+    }, 10000);
+  </script>
 </body>
 </html>
