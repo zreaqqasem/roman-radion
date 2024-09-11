@@ -1,17 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
     <meta charset="utf-8">
-    <title>Cast CAF Receiver</title>
-    <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-    <!-- Cast Debug Logger -->
-    <script src="//www.gstatic.com/cast/sdk/libs/devtools/debug_layer/caf_receiver_logger.js"></script>
-  </head>
+    <title>Custom Receiver</title>
+    <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <script type="text/javascript">
+      window.onload = function() {
+        const context = cast.framework.CastReceiverContext.getInstance();
+        const playerManager = context.getPlayerManager();
 
+        // Listen for custom messages to update metadata
+        context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
+          const data = JSON.parse(event.data);
+          
+          // Update the metadata
+          const metadata = new cast.framework.messages.MediaMetadata(cast.framework.messages.MetadataType.MUSIC_TRACK);
+          metadata.title = data.title;
+          metadata.artist = data.artist;
+          metadata.images = [
+              { url: data.imageUrl }
+          ];
+
+          // Get current media information
+          const mediaInformation = playerManager.getMediaInformation();
+          mediaInformation.metadata = metadata;
+
+          // Update the media info with the new metadata
+          playerManager.setMediaInformation(mediaInformation);
+
+          console.log("Metadata updated:", data);
+        });
+
+        context.start();
+      };
+    </script>
+  </head>
   <body>
-    <cast-media-player></cast-media-player>
-    <footer>
-      <script src="js/receiver.js"></script>
-  </footer>
+    <h1>Custom Receiver is running!</h1>
   </body>
 </html>
