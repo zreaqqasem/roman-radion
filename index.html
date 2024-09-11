@@ -1,48 +1,57 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <script type="text/javascript"
-      src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js">
-  </script>
+    <meta charset="UTF-8">
+    <title>Custom Cast Receiver</title>
+    <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <style>
+      /* Full-screen background image */
+      body {
+        margin: 0;
+        background-color: #000;
+        overflow: hidden;
+      }
+
+      cast-media-player {
+        --splash-image: url("https://example.com/initial-image.jpg"); /* Default image */
+      }
+    </style>
 </head>
 <body>
-  <cast-media-player></cast-media-player>
+  <cast-media-player></cast-media-player> <!-- Keeps the default media player UI -->
 
   <script>
-    // Initialize the CastReceiverContext
     const context = cast.framework.CastReceiverContext.getInstance();
-
-    // Initialize PlayerManager to control media playback
     const playerManager = context.getPlayerManager();
 
-    // Start the receiver with default options
+    // Start the receiver context
     context.start();
 
-    // Add a custom message listener for receiving metadata updates
-      castSession.addMessageListener("urn:x-cast:com.example.custom", (namespace, event) => {
+    // Listen for custom messages to update metadata
+    context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
       const data = JSON.parse(event.data);
 
       // Log the received message for debugging
-      console.log('Received message: ', data);
+      console.log('Received custom message:', data);
 
-      // Get current media information
-      const mediaInformation = playerManager.getMediaInformation();
+      // Update media metadata and UI dynamically
+      let playerElement = document.getElementsByTagName("cast-media-player")[0];
 
-      // Update metadata if we have the current media information
-      if (mediaInformation && mediaInformation.metadata) {
-        // Update the metadata fields like title, artist, and image
-        mediaInformation.metadata.title = data.title || mediaInformation.metadata.title;
-        mediaInformation.metadata.artist = data.artist || mediaInformation.metadata.artist;
-        mediaInformation.metadata.images = [{ url: data.imageUrl }] || mediaInformation.metadata.images;
-
-        // Apply the updated metadata without interrupting the media
-        playerManager.setMediaInformation(mediaInformation);
-        console.log('Metadata updated: ', mediaInformation.metadata);
-      } else {
-        console.error('No media information found to update.');
+      // Check if data contains the necessary fields
+      if (data.imageUrl) {
+        playerElement.style.setProperty('--splash-image', `url("${data.imageUrl}")`);
       }
+      if (data.title) {
+        playerElement.setAttribute('title', data.title); // Update title attribute
+      }
+      if (data.artist) {
+        playerElement.setAttribute('artist', data.artist); // Update artist attribute
+      }
+
+      console.log('Updated metadata dynamically.');
     });
 
-    // Optionally: Add logging for cast events (useful for debugging)
+    // Log when the receiver is ready
     context.addEventListener(cast.framework.system.EventType.READY, () => {
       console.log("Receiver is ready!");
     });
