@@ -1,60 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Custom Cast Receiver</title>
-    <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-    <style>
-      /* Full-screen background image */
-      body {
-        margin: 0;
-        background-color: #000;
-        overflow: hidden;
-      }
-
-      cast-media-player {
-        --splash-image: url("https://example.com/initial-image.jpg"); /* Default image */
-      }
-    </style>
-</head>
 <body>
   <cast-media-player></cast-media-player> <!-- Keeps the default media player UI -->
-
-  <script>
-    const context = cast.framework.CastReceiverContext.getInstance();
-    const playerManager = context.getPlayerManager();
-
-    // Start the receiver context
-    context.start();
-
-    // Listen for custom messages to update metadata
-    context.addCustomMessageListener('urn:x-cast:com.example.custom', (event) => {
-      const data = JSON.parse(event.data);
-
-      // Log the received message for debugging
-      console.log('Received custom message:', data);
-
-      // Update media metadata and UI dynamically
-      let playerElement = document.getElementsByTagName("cast-media-player")[0];
-
-      // Check if data contains the necessary fields
-      if (data.imageUrl) {
-        playerElement.style.setProperty('--splash-image', `url("${data.imageUrl}")`);
-      }
-      if (data.title) {
-        playerElement.setAttribute('title', data.title); // Update title attribute
-      }
-      if (data.artist) {
-        playerElement.setAttribute('artist', data.artist); // Update artist attribute
-      }
-
-      console.log('Updated metadata dynamically.');
-    });
-
-    // Log when the receiver is ready
-    context.addEventListener(cast.framework.system.EventType.READY, () => {
-      console.log("Receiver is ready!");
-    });
-  </script>
 </body>
 </html>
